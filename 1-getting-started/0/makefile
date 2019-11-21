@@ -1,6 +1,6 @@
 .PHONY: game
 
-run: compile
+run: game
 	./game
 
 compile:

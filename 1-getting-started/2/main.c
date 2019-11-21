@@ -68,7 +68,7 @@ int main(int argc, char** argv)
 		}
 	}
 
-	while (!WindowShouldClose())    // Detect window close button or ESC key
+	while (!WindowShouldClose())		// Detect window close button or ESC key
 	{
 		game_update(&game);
 		game_draw(&game);
