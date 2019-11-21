@@ -12,7 +12,14 @@ struct Game {
 	char *title;
 };
 
-void game_init(struct Game *game) {
+int game_init(struct Game *game) {
+	struct Game g = { 0 };
+
+	if (game == NULL) {
+		return 1;
+	}
+
+	*game = g; //initialize to 0
 
 	game->screenWidth = 800;
 	game->screenHeight = 450;
@@ -24,6 +31,8 @@ void game_init(struct Game *game) {
 		game->title);
 
 	SetTargetFPS(game->fps);
+
+	return 0;
 }
 
 void game_update(struct Game *game) {
@@ -57,22 +66,23 @@ int main(int argc, char** argv)
 
 	session = argv[1];
 
-	game_init(&game);
+	if (game_init(&game)) {
+		printf("couldn't initialize game\n");
+	}
 
 	if (strcmp(session, DISABLE_PARSEC) == 0) {
-		printf("skipping parsec init");
+		printf("skipping parsec init\n");
 	} else {
 		if (parsecraylib_init(&parsec, session)) {
-			printf("failed to initialize parsec");
+			printf("failed to initialize parsec\n");
 			return 1;
 		}
 	}
 
-	while (!WindowShouldClose())		// Detect window close button or ESC key
+	while (!WindowShouldClose())
 	{
 		game_update(&game);
 		game_draw(&game);
-			//----------------------------------------------------------------------------------
 	}
 
 	parsecraylib_deinit(parsec);
