@@ -39,7 +39,9 @@ uint32_t parsecraylib_n_guests(Parsec *parsec) {
 
 void parsecraylib_submit_frame(Parsec* parsec, unsigned int texId) {
 	if (parsec != NULL) {
-		ParsecHostGLSubmitFrame(parsec, texId);
+		if (parsecraylib_n_guests(parsec) > 0) {
+			ParsecHostGLSubmitFrame(parsec, texId);
+		}
 	}
 }
 #endif
