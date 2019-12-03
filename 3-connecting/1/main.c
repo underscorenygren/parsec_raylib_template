@@ -4,6 +4,33 @@
 #include "libparsecraylib.c"
 
 #define DISABLE_PARSEC "noparsec"
+#define NUM_COLORS 4
+#define NUM_SHAPES 3
+#define NUM_PLAYERS 8
+
+const Color PlayerColors[NUM_COLORS] = {
+	BLUE,
+	RED,
+	YELLOW,
+	GREEN,
+};
+
+enum PlayerShape {
+	Rect = 0,
+	Circle = 1,
+	Triangle = 2
+};
+
+struct Player {
+	ParsecGuest guest;
+	bool active;
+	int color;
+	enum PlayerShape shape;
+	bool p_up;
+	bool p_down;
+	bool p_left;
+	bool p_right;
+};
 
 struct Game {
 	int screenWidth;
@@ -19,7 +46,32 @@ struct Game {
 	//game state
 	Parsec *parsec;
 	uint32_t n_guests;
+	struct Player players[NUM_PLAYERS];
 };
+
+void player_init(struct Player *player, ParsecGuest *guest) {
+	struct Player empty = { 0 };
+	*player = empty;
+	player->active = true;
+	if (guest != NULL) {
+		player->guest = *guest;
+	}
+}
+
+void player_deinit(struct Player *player) {
+	player->active = false;
+}
+
+struct Player *game_add_player(struct Game *game, ParsecGuest *guest) {
+	for (int i = 0; i < NUM_PLAYERS; i++) {
+		struct Player *player = &game->players[i];
+		if (!player->active) {
+			player_init(player, guest);
+			return player;
+		}
+	}
+	return NULL;
+}
 
 int game_init(struct Game *game) {
 
@@ -50,6 +102,8 @@ int game_init(struct Game *game) {
 	game->dst.width = game->screenWidth;
 	game->dst.height = game->screenHeight;
 
+	game_add_player(game, NULL);
+
 	return 0;
 }
 
@@ -57,9 +111,31 @@ void game_update(struct Game *game) {
 	game->n_guests = parsecraylib_n_guests(game->parsec);
 }
 
+void player_draw(struct Player *player, float x, float y) {
+	Color col = PlayerColors[player->color];
+	uint32_t width = 20, height = 20;
+	Vector2 v = {x, y};
+	switch (player->shape) {
+		case Rect:
+			DrawRectangle(x, y, width, height, col);
+			break;
+		case Circle:
+			DrawCircle(x, y, width, col);
+			break;
+		case Triangle:
+			DrawPoly(v, 3, width, 0, col);
+			break;
+		default:
+			break;
+	}
+}
+
 void game_draw(struct Game *game) {
 	uint32_t size = 100;
 	char text[size];
+	uint32_t n_players = parsecraylib_n_guests(game->parsec) + 1;
+	float offset = game->screenWidth / (n_players + 1);
+	uint32_t drawnPlayer = 0;
 
 	BeginTextureMode(game->canvas);
 
@@ -68,6 +144,14 @@ void game_draw(struct Game *game) {
 	snprintf(text, size, "You are hosting %d guest(s).", game->n_guests);
 
 	DrawText(text, 190, 200, 20, LIGHTGRAY);
+
+	for (int i = 0; i < NUM_PLAYERS; i++) {
+		struct Player *player = &game->players[i];
+		if (player->active) {
+			player_draw(player, offset + offset * drawnPlayer, 300);
+			drawnPlayer++;
+		}
+	}
 
 	EndTextureMode();
 
